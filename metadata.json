@@ -1,0 +1,6 @@
+{
+  "name": " Calendario de DIAS",
+  "description": "Una aplicación de calendario para organizar turnos de trabajo. Ahora con soporte para múltiples calendarios, solapas, modo oscuro, resumen mensual y opción para borrar datos.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
