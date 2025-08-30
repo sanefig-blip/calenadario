@@ -10,6 +10,13 @@
         // Configuración para habilitar el modo oscuro de Tailwind
         tailwind.config = {
           darkMode: 'class',
+          theme: {
+            extend: {
+              spacing: {
+                '128': '32rem',
+              }
+            }
+          }
         }
     </script>
     <!-- Estilos generales y un pequeño cargador inicial -->
@@ -44,7 +51,7 @@
 <body class="bg-gray-50 dark:bg-gray-950">
     <!-- El div principal donde se montará la aplicación de React -->
     <div id="root">
-        <div id="loader">Cargando calendario...</div>
+        <div id="loader">Cargando...</div>
     </div>
 
     <!-- Librerías de Javascript necesarias para que la aplicación funcione -->
@@ -156,6 +163,7 @@ const MoonIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" wid
 const BroomIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 8L8 20"/><path d="M21 15a2 2 0 0 1-2 2H7l-4 4"/><path d="M15 3a2 2 0 0 0-2 2l-3.4 3.4"/><path d="M18 6L9 15"/></svg>);
 const CogIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M12 2v2"/><path d="M12 22v-2"/><path d="m17 7 1.4-1.4"/><path d="m6.4 17.6 1.4-1.4"/><path d="M7 7l-1.4-1.4"/><path d="m17.6 17.6-1.4-1.4"/><path d="M2 12h2"/><path d="M22 12h-2"/><path d="m17 17 1.4 1.4"/><path d="m6.4 6.4 1.4 1.4"/></svg>);
 const SpinnerIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>);
+const CameraIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>);
 // --- FIN: Iconos ---
 
 
@@ -373,7 +381,7 @@ const AssignmentModal = ({ isOpen, onClose, date, assignments, onSave, people, p
     );
 };
 
-const Header = ({ currentDate, theme, onToggleTheme, onPrevMonth, onNextMonth, onGoToToday, onOpenPeopleManager, onClearData }) => {
+const Header = ({ currentDate, theme, onToggleTheme, onPrevMonth, onNextMonth, onGoToToday, onOpenPeopleManager, onClearData, onCapture, isCapturing }) => {
     const monthName = MONTH_NAMES[currentDate.getMonth()];
     const year = currentDate.getFullYear();
 
@@ -390,6 +398,9 @@ const Header = ({ currentDate, theme, onToggleTheme, onPrevMonth, onNextMonth, o
                     </div>
                 </div>
                 <div className="flex items-center space-x-1 md:space-x-2">
+                    <button onClick={onCapture} disabled={isCapturing} className="p-2 rounded-full hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-wait" aria-label="Capturar imagen">
+                        {isCapturing ? <SpinnerIcon className="w-5 h-5 animate-spin text-blue-500" /> : <CameraIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />}
+                    </button>
                     <button onClick={onToggleTheme} className="p-2 rounded-full hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors" aria-label="Cambiar tema">
                         {theme === 'light' ? <MoonIcon className="w-5 h-5 text-gray-600" /> : <SunIcon className="w-5 h-5 text-yellow-300" />}
                     </button>
@@ -440,23 +451,65 @@ const Tabs = ({ calendars, activeCalendarId, onSelectTab, onAddTab, onRenameTab,
                     const isEditing = editingTabId === cal.id;
                     const isGeneral = cal.id === GENERAL_CALENDAR_ID;
 
+                    const paddingClasses = isGeneral ? 'px-3' : 'pl-3 pr-12';
+                    const activeClasses = isActive 
+                        ? 'border-blue-600 text-blue-600 dark:text-blue-400' 
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600';
+
                     return (
-                        <div key={cal.id} className={`relative flex items-center group whitespace-nowrap border-b-2 py-2 px-3 text-sm font-medium transition-colors ${isActive ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'}`}>
+                        <div key={cal.id} className={`relative flex items-center group whitespace-nowrap border-b-2 py-2 text-sm font-medium transition-colors ${activeClasses} ${paddingClasses}`}>
                             {isEditing ? (
-                                <input ref={inputRef} type="text" value={editingName} onChange={handleNameChange} onBlur={() => handleSave(cal.id)} onKeyDown={(e) => handleKeyDown(e, cal.id)} className="bg-transparent border border-blue-500 rounded px-1 py-0.5 -ml-1 w-24" />
+                                <input 
+                                    ref={inputRef} 
+                                    type="text" 
+                                    value={editingName} 
+                                    onChange={handleNameChange} 
+                                    onBlur={() => handleSave(cal.id)} 
+                                    onKeyDown={(e) => handleKeyDown(e, cal.id)} 
+                                    className="bg-gray-100 dark:bg-gray-700 border border-blue-500 rounded px-2 py-0.5 text-sm font-medium w-full text-gray-800 dark:text-gray-200"
+                                />
                             ) : (
-                                <button onClick={() => onSelectTab(cal.id)}>{cal.name}</button>
+                                <button onClick={() => onSelectTab(cal.id)} className="truncate max-w-[150px]">
+                                    {cal.name}
+                                </button>
                             )}
                             {!isGeneral && !isEditing && (
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity ml-1">
-                                    <button onClick={() => handleStartEditing(cal)} className="p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"><PencilIcon className="w-3 h-3"/></button>
-                                    <button onClick={() => onDeleteTab(cal.id)} className="p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"><XIcon className="w-3 h-3"/></button>
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity space-x-1">
+                                    <button onClick={() => handleStartEditing(cal)} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                                        <PencilIcon className="w-4 h-4 text-gray-500 dark:text-gray-400"/>
+                                    </button>
+                                    <button onClick={() => onDeleteTab(cal.id)} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                                        <XIcon className="w-4 h-4 text-gray-500 dark:text-gray-400"/>
+                                    </button>
                                 </div>
                             )}
                         </div>
                     );
                 })}
                 <button onClick={onAddTab} className="flex items-center justify-center w-8 h-8 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"><PlusIcon className="w-5 h-5"/></button>
+            </div>
+        </div>
+    );
+};
+
+const ViewSwitcher = ({ activeView, onSwitch }) => {
+    return (
+        <div className="bg-gray-50 dark:bg-gray-950 pt-3 sticky top-[117px] z-10">
+            <div className="container mx-auto px-4">
+                <div className="inline-flex rounded-md shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    <button
+                        onClick={() => onSwitch('calendar')}
+                        className={`px-4 py-2 text-sm font-medium rounded-l-md transition-colors ${activeView === 'calendar' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                    >
+                        Calendario
+                    </button>
+                    <button
+                        onClick={() => onSwitch('summary')}
+                        className={`px-4 py-2 text-sm font-medium rounded-r-md border-l border-gray-200 dark:border-gray-700 transition-colors ${activeView === 'summary' ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                    >
+                        Resumen
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -489,7 +542,7 @@ const CalendarGrid = ({ currentDate, schedule, people, onDayClick, addModePerson
         const isDisabled = isGeneralView;
         
         const containerClasses = [
-            'relative flex flex-col h-32 p-1.5 border-t border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors duration-200',
+            'relative flex flex-col min-h-[8rem] p-1.5 border-t border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors duration-200',
             (addModePersonId && !isDisabled) ? 'cursor-copy hover:bg-green-50 dark:hover:bg-green-900/50' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800',
             isDisabled ? 'cursor-not-allowed bg-gray-50 dark:bg-gray-900/50' : ''
         ].join(' ');
@@ -497,12 +550,12 @@ const CalendarGrid = ({ currentDate, schedule, people, onDayClick, addModePerson
         return (
             <div onClick={() => !isDisabled && onDayClick(day)} className={containerClasses}>
                 <div className={`flex items-center justify-center w-7 h-7 text-sm font-medium rounded-full ${isToday ? 'bg-blue-600 text-white' : dayNumberColor}`}>{day.getDate()}</div>
-                <div className="flex-grow mt-1 space-y-1 overflow-hidden">
+                <div className="flex-grow mt-1 space-y-1 overflow-y-auto">
                     {assignments.map(a => {
                         const person = people.find(p => p.id === a.personId);
                         if (!person) return null;
                         return (
-                            <div key={a.id} className={`px-1.5 py-0.5 rounded text-xs font-semibold truncate ${person.color} ${person.textColor}`}>
+                            <div key={a.id} className={`px-1.5 py-0.5 rounded text-xs font-semibold whitespace-normal break-words ${person.color} ${person.textColor}`}>
                                 {isGeneralView && a.calendarName ? `[${a.calendarName.substring(0,3)}] ${person.name}` : person.name}
                             </div>
                         );
@@ -543,7 +596,7 @@ const SummaryView = ({ schedule, people, currentDate, onDayClick, addModePersonI
     const isGeneralView = activeCalendarId === GENERAL_CALENDAR_ID;
 
     return (
-        <div className="p-4 bg-white dark:bg-gray-800/50 rounded-t-lg border-x border-t border-gray-200 dark:border-gray-700 mx-1 mt-4">
+        <div className="p-4 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 my-4">
             <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Resumen del Mes</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {sortedPeopleIds.map(personId => {
@@ -575,9 +628,71 @@ const SummaryView = ({ schedule, people, currentDate, onDayClick, addModePersonI
 };
 // --- FIN: Componentes ---
 
+// --- INICIO: Pantalla de Login ---
+const LoginScreen = ({ onLogin }) => {
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const passwordRef = useRef(null);
+
+    useEffect(() => {
+        passwordRef.current?.focus();
+    }, []);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
+        setTimeout(() => {
+            if (password === 'mica2025') {
+                onLogin();
+            } else {
+                setError('Contraseña incorrecta.');
+                setPassword('');
+                setIsLoading(false);
+                passwordRef.current?.focus();
+            }
+        }, 500);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
+            <div className="w-full max-w-sm mx-auto p-8 bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+                <div className="text-center mb-6">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Calendario</h1>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Introduce la contraseña para acceder.</p>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label htmlFor="password-input" className="sr-only">Contraseña</label>
+                        <input
+                            ref={passwordRef}
+                            id="password-input"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Contraseña"
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        />
+                    </div>
+                    {error && <p className="text-xs text-red-500 text-center">{error}</p>}
+                    <div>
+                        <button type="submit" disabled={isLoading} className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-wait">
+                            {isLoading ? <SpinnerIcon className="animate-spin h-5 w-5" /> : 'Acceder'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+// --- FIN: Pantalla de Login ---
+
 
 // --- INICIO: Componente Principal App ---
-const App = () => {
+const App = ({ theme, setTheme }) => {
     const [currentDate, setCurrentDate] = useState(new Date(2025, 8, 1)); // Sept 2025
     
     const [people, setPeople] = useLocalStorage('shifter-people-v2', INITIAL_PEOPLE);
@@ -587,18 +702,15 @@ const App = () => {
     };
     const [calendars, setCalendars] = useLocalStorage('shifter-calendars-v2', initialCalendars);
     const [activeCalendarId, setActiveCalendarId] = useLocalStorage('shifter-active-calendar-v2', 'principal');
+    const [activeView, setActiveView] = useLocalStorage('shifter-active-view-v2', 'calendar');
 
     const [modalState, setModalState] = useState({ isOpen: false, date: null, personIdToFocus: null });
-    const [theme, setTheme] = useLocalStorage('shifter-theme-v2', 'light');
     const [isPeopleManagerOpen, setIsPeopleManagerOpen] = useState(false);
     const [personToDelete, setPersonToDelete] = useState(null);
     const [addModePersonId, setAddModePersonId] = useState(null);
     const [clearDataModal, setClearDataModal] = useState({isOpen: false, target: null});
+    const [isCapturing, setIsCapturing] = useState(false);
     
-    useEffect(() => {
-        document.documentElement.classList.toggle('dark', theme === 'dark');
-    }, [theme]);
-
     const generalSchedule = useMemo(() => {
         const merged = {};
         Object.values(calendars).forEach(cal => {
@@ -613,6 +725,39 @@ const App = () => {
 
     const activeCalendar = calendars[activeCalendarId];
     const activeSchedule = activeCalendarId === GENERAL_CALENDAR_ID ? generalSchedule : activeCalendar?.schedule || {};
+
+    const handleCapture = useCallback(() => {
+        setIsCapturing(true);
+        const captureElement = document.getElementById('capture-area');
+        const fab = document.getElementById('fab-add-button');
+
+        if (!captureElement) {
+            console.error("Capture element not found");
+            setIsCapturing(false);
+            return;
+        }
+
+        if (fab) fab.style.display = 'none';
+
+        html2canvas(captureElement, {
+            useCORS: true,
+            scale: 2,
+            backgroundColor: theme === 'dark' ? '#030712' : '#f9fafb',
+        }).then(canvas => {
+            const link = document.createElement('a');
+            const monthName = MONTH_NAMES[currentDate.getMonth()];
+            const year = currentDate.getFullYear();
+            link.download = `calendario-${monthName.toLowerCase().replace(' ', '-')}-${year}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }).catch(err => {
+            console.error("Error capturing image:", err);
+            alert("Hubo un error al generar la imagen.");
+        }).finally(() => {
+            if (fab) fab.style.display = 'flex';
+            setIsCapturing(false);
+        });
+    }, [currentDate, theme]);
 
     const handleSaveAssignments = useCallback((dateKey, newAssignments) => {
         if (activeCalendarId === GENERAL_CALENDAR_ID) return;
@@ -704,7 +849,7 @@ const App = () => {
     };
     
     return (
-        <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200 flex flex-col transition-colors duration-300">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 flex flex-col transition-colors duration-300">
             <Header 
                 currentDate={currentDate} 
                 theme={theme}
@@ -714,6 +859,8 @@ const App = () => {
                 onGoToToday={() => setCurrentDate(new Date())}
                 onOpenPeopleManager={() => setIsPeopleManagerOpen(true)}
                 onClearData={() => setClearDataModal({isOpen: true, target: 'all'})}
+                onCapture={handleCapture}
+                isCapturing={isCapturing}
             />
             <Tabs 
                 calendars={calendars}
@@ -723,33 +870,45 @@ const App = () => {
                 onRenameTab={handleRenameCalendar}
                 onDeleteTab={handleDeleteCalendar}
             />
+
+            <ViewSwitcher activeView={activeView} onSwitch={setActiveView} />
             
-             {addModePersonId && activeCalendarId !== GENERAL_CALENDAR_ID && (
-                <div className="bg-green-100 dark:bg-green-900/50 border-b-2 border-green-300 dark:border-green-700 p-2 text-center sticky top-[117px] z-10">
+             {addModePersonId && activeCalendarId !== GENERAL_CALENDAR_ID && activeView === 'calendar' && (
+                <div className="bg-green-100 dark:bg-green-900/50 border-b-2 border-green-300 dark:border-green-700 p-2 text-center sticky top-[161px] z-10">
                     <span className="font-semibold text-green-800 dark:text-green-200">Modo Añadir: Haz clic en el calendario para asignar.</span>
                     <button onClick={() => setAddModePersonId(null)} className="ml-4 text-green-600 dark:text-green-300 hover:text-green-800 dark:hover:text-green-100 font-bold">Cancelar</button>
                 </div>
             )}
+            
+             {addModePersonId && activeCalendarId !== GENERAL_CALENDAR_ID && activeView === 'summary' && (
+                <div className="bg-green-100 dark:bg-green-900/50 border-b-2 border-green-300 dark:border-green-700 p-2 text-center sticky top-[161px] z-10">
+                    <span className="font-semibold text-green-800 dark:text-green-200">Modo Añadir activo. Cambia a la vista de Calendario para asignar turnos.</span>
+                    <button onClick={() => setAddModePersonId(null)} className="ml-4 text-green-600 dark:text-green-300 hover:text-green-800 dark:hover:text-green-100 font-bold">Cancelar</button>
+                </div>
+            )}
 
-            <main className="container mx-auto max-w-7xl flex-grow w-full">
-                <SummaryView
-                    schedule={activeSchedule} people={people} currentDate={currentDate}
-                    onDayClick={(date, personId) => setModalState({ isOpen: true, date, personIdToFocus: personId })}
-                    addModePersonId={addModePersonId}
-                    onToggleAddMode={(personId) => setAddModePersonId(prev => prev === personId ? null : personId)}
-                    activeCalendarId={activeCalendarId}
-                />
-                <CalendarGrid
-                    currentDate={currentDate} schedule={activeSchedule} people={people}
-                    onDayClick={handleDayClick}
-                    addModePersonId={addModePersonId}
-                    activeCalendarId={activeCalendarId}
-                    calendarName={activeCalendar?.name}
-                />
+            <main id="capture-area" className="container mx-auto max-w-7xl flex-grow w-full">
+                 {activeView === 'calendar' ? (
+                    <CalendarGrid
+                        currentDate={currentDate} schedule={activeSchedule} people={people}
+                        onDayClick={handleDayClick}
+                        addModePersonId={addModePersonId}
+                        activeCalendarId={activeCalendarId}
+                        calendarName={activeCalendar?.name}
+                    />
+                ) : (
+                     <SummaryView
+                        schedule={activeSchedule} people={people} currentDate={currentDate}
+                        onDayClick={(date, personId) => setModalState({ isOpen: true, date, personIdToFocus: personId })}
+                        addModePersonId={addModePersonId}
+                        onToggleAddMode={(personId) => setAddModePersonId(prev => prev === personId ? null : personId)}
+                        activeCalendarId={activeCalendarId}
+                    />
+                )}
             </main>
 
             {activeCalendarId !== GENERAL_CALENDAR_ID && (
-                <button onClick={() => setModalState({ isOpen: true, date: new Date() })} className="fixed bottom-6 right-6 bg-blue-600 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-transform transform hover:scale-110 focus:outline-none focus:ring-2 ring-blue-500" aria-label="Añadir turno"><PlusIcon className="w-8 h-8"/></button>
+                <button id="fab-add-button" onClick={() => setModalState({ isOpen: true, date: new Date() })} className="fixed bottom-6 right-6 bg-blue-600 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-transform transform hover:scale-110 focus:outline-none focus:ring-2 ring-blue-500" aria-label="Añadir turno"><PlusIcon className="w-8 h-8"/></button>
             )}
 
             <AssignmentModal
@@ -785,9 +944,37 @@ const App = () => {
 // --- FIN: Componente Principal App ---
 
 
+// --- INICIO: Componente de Autenticación ---
+const AuthenticatedApp = () => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [theme, setTheme] = useLocalStorage('shifter-theme-v2', 'light');
+
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+    }, [theme]);
+    
+    useEffect(() => {
+        if (sessionStorage.getItem('shifter-is-authenticated') === 'true') {
+            setIsAuthenticated(true);
+        }
+    }, []);
+
+    const handleLoginSuccess = () => {
+        sessionStorage.setItem('shifter-is-authenticated', 'true');
+        setIsAuthenticated(true);
+    };
+
+    if (!isAuthenticated) {
+        return <LoginScreen onLogin={handleLoginSuccess} />;
+    }
+
+    return <App theme={theme} setTheme={setTheme} />;
+};
+// --- FIN: Componente de Autenticación ---
+
 // --- INICIO: Renderizar la aplicación ---
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+root.render(<AuthenticatedApp />);
 // --- FIN: Renderizar la aplicación ---
     </script>
 </body>
